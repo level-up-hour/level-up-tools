@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-You can use this script to calculate the points for the level up form 
-submissions. You can see the files you need to supply and their 
+You can use this script to calculate the points for the level up form
+submissions. You can see the files you need to supply and their
 format with --help.
 """
 
@@ -19,7 +19,6 @@ def test_file(fn):
         print("{0} does not exist.".format(fn))
         exit()
     return fn
-
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -45,7 +44,8 @@ people = {}
 
 submissions_col_headers = ["Timestamp", "Public Name", "Name", "Email", "Code"]
 reference_col_headers = ["Code", "Points"]
-output_col_headers = ["Public Name", "Name", "Email", "Points"]
+#output_col_headers = ["Public Name", "Name", "Email", "Points"]
+output_col_headers = ["Public Name", "Points"]
 
 # collect all point values in one dict
 with open(reference_fn) as csvfile:
@@ -69,8 +69,19 @@ with open(point_submissions_fn) as csvfile:
             print(header + " column not in " + point_submissions_fn)
             exit()
 
+    #not very pythonic, i know, will fix soon
+    #dedup sub_list
+    orig_subs = list(csv_reader)
+    dedup_subs = []
+    tmp_subs = []
+    for sub in orig_subs:
+        part_sub = [sub["Email"], sub["Code"]]
+        if part_sub not in tmp_subs:
+            dedup_subs.append(sub)
+            tmp_subs.append(part_sub)
+
     sub_counter = 1
-    for row in csv_reader:
+    for row in dedup_subs:
         person = None
         submission = {"id": sub_counter,
                     "public_name": row["Public Name"],
@@ -78,14 +89,13 @@ with open(point_submissions_fn) as csvfile:
                     "email": row["Email"],
                     "code": row["Code"],
                     }
-        person = people.get(str([submission["name"]]))
+        person = people.get(str(submission["email"]))
         if person is None:
             submission["points"] = 0
             person = submission
-            people[submission["name"]] = person
+            people[submission["email"]] = person
 
-        points = person["points"]
-        person["points"] = points + codes[person["code"]]
+        person["points"] += codes[submission["code"]]
 
 #for debugging
 #print("Available Codes:")
@@ -96,14 +106,16 @@ with open(point_submissions_fn) as csvfile:
 def to_output_format(person):
     out_person = OrderedDict()
     out_person["Public Name"] = person["public_name"]
-    out_person["Name"] = person["name"]
-    out_person["Email"] = person["email"]
+#    out_person["Name"] = person["name"]
+#    out_person["Email"] = person["email"]
     out_person["Points"] = person["points"]
     return out_person
 
 out_people = []
 for key, person in people.items():
     out_people.append(to_output_format(person))
+
+out_people = sorted(out_people, key=lambda x: int(x["Points"]), reverse=True)
 
 with open(output_fn, 'w') as csvfile:
     out_writer = csv.DictWriter(csvfile, fieldnames=output_col_headers, quoting=csv.QUOTE_ALL)
