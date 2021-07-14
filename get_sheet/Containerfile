@@ -1,0 +1,23 @@
+FROM fedora
+
+RUN yum install -y procps which iproute iputils bind-utils \
+        less traceroute python3 pip && \
+    yum clean all
+
+RUN yum install -y python-oauth2client python-httplib2 && \
+    yum clean all
+
+RUN pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+
+RUN mkdir /opt/gdrive
+ADD ./get_csv.py /opt/gdrive/get_csv.py
+RUN chmod a+x /opt/gdrive/get_csv.py
+WORKDIR /workdir
+
+# directory where the file will be delivered
+VOLUME /workdir
+
+# directory which has your gdrive creds
+VOLUME /opt/gdrive/credentials
+
+ENTRYPOINT [ "/opt/gdrive/get_csv.py" ]
