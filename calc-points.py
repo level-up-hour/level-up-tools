@@ -43,7 +43,7 @@ submissions = {}
 people = {}
 
 submissions_col_headers = ["Timestamp", "Public Name", "Name", "Email", "Code"]
-reference_col_headers = ["Code", "Points"]
+reference_col_headers = ["Code (No Dups)", "Points"]
 #output_col_headers = ["Public Name", "Name", "Email", "Points"]
 output_col_headers = ["Public Name", "Points"]
 
@@ -57,8 +57,8 @@ with open(reference_fn) as csvfile:
             exit()
 
     for row in csv_reader:
-        if row["Code"] != "":
-            codes[row["Code"]] = int(row['Points'])
+        if row["Code (No Dups)"] != "":
+            codes[row["Code (No Dups)"]] = int(row['Points'])
 
 # collect all submissions in one dict
 with open(point_submissions_fn) as csvfile:
